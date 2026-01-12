@@ -5,9 +5,6 @@
 from ghidra.program.model.symbol import SourceType
 from ghidra.util.exception import CancelledException
 
-def to_unsigned(input: int):
-    return input & 0xFFFFFFFF
-
 def main():
     try:
         # accessors
