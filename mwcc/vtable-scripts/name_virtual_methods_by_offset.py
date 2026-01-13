@@ -6,16 +6,13 @@ from ghidra.program.model.symbol import SourceType
 from ghidra.util.exception import CancelledException
 
 def create_namespace(namespace_name):
-    sym_table   = currentProgram.getSymbolTable()
-
-    parent_namespace = None
+    sym_table           = currentProgram.getSymbolTable()
+    parent_namespace    = None
 
     for part in namespace_name.split("::"):
         cur_ns = sym_table.getNamespace(part, parent_namespace)
-
         if cur_ns is None:
             cur_ns = sym_table.createNameSpace(parent_namespace, part, SourceType.USER_DEFINED)
-        
         parent_namespace = cur_ns
     
     return parent_namespace
@@ -23,8 +20,8 @@ def create_namespace(namespace_name):
 def main():
     try:
         # accessors
-        mem         = currentProgram.getMemory()
-        fm          = currentProgram.getFunctionManager()
+        sym_table       = currentProgram.getSymbolTable()
+        mem             = currentProgram.getMemory()
 
         # get info
         vtable_start    = askAddress("Virtual Table Start", "Enter the start address:")
@@ -34,43 +31,35 @@ def main():
         method_count    = (vtable_size // 4) - 2    # exclude the pointer to rtti and the "this" delta
         methods_start   = vtable_start.add(8)       # same as above ^
 
-        # get functions
-        funcs = []
+        # create namespace
+        namespace       = create_namespace(namespace_name)
+
         for i in range(method_count):
             vtable_entry_addr = methods_start.add(i * 4)
-            function_addr = toAddr(mem.getInt(vtable_entry_addr))
-            if function_addr == 0:
-                continue
-            target = fm.getFunctionAt(function_addr)
-
-            # make it a function if it isn't defined as one
-            if target is None:
-                target = createFunction(function_addr, None)
+            raw_ptr = mem.getInt(vtable_entry_addr)
             
-            funcs.append(target)
-        
-        if all(func is None for func in funcs):
-            raise ValueError("No valid functions were found in the specified address range.")
-
-        # create namespace
-        namespace = create_namespace(namespace_name)
-
-        # rename functions
-        for i, func in enumerate(funcs):
-            # ignore if no function or if function is named
-            if func is None:
+            if raw_ptr == 0:
+                # pure virtual method
                 continue
-            
-            if func.getSymbol().getSource() != SourceType.DEFAULT:
+
+            target_addr = toAddr(raw_ptr)
+            symbol = sym_table.getPrimarySymbol(target_addr)
+
+            if symbol is None:
+                # no label, create one
+                symbol = sym_table.createLabel(target_addr, "temp", namespace, SourceType.USER_DEFINED)
+
+            # must be unnamed
+            if symbol.getSource() != SourceType.DEFAULT:
                 continue
-            
+
             vtable_offset = (i * 4) + 8
-            old_name = func.getName(True)
+            old_name = symbol.getName(True)
             new_name = "vf" + (hex(vtable_offset)[2:]).upper()
 
-            symbol = func.getSymbol()
+            # rename symbol
             symbol.setNameAndNamespace(new_name, namespace, SourceType.USER_DEFINED)
-
+            
             print(f"{old_name} -> {new_name}")
 
         print("Done!")
