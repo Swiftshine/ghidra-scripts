@@ -1,4 +1,4 @@
-# Identify vtable overrides.
+# Identify and rename vtable overrides.
 # @category Analysis.C++
 # @runtime PyGhidra
 
