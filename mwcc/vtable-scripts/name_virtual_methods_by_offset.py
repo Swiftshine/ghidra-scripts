@@ -25,6 +25,8 @@ def main():
         for i in range(method_count):
             vtable_entry_addr = methods_start.add(i * 4)
             function_addr = toAddr(mem.getInt(vtable_entry_addr))
+            if function_addr == 0:
+                continue
             target = fm.getFunctionAt(function_addr)
 
             # make it a function if it isn't defined as one
