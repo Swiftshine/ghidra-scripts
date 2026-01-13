@@ -5,12 +5,26 @@
 from ghidra.program.model.symbol import SourceType
 from ghidra.util.exception import CancelledException
 
+def create_namespace(namespace_name):
+    sym_table   = currentProgram.getSymbolTable()
+
+    parent_namespace = None
+
+    for part in namespace_name.split("::"):
+        cur_ns = sym_table.getNamespace(part, parent_namespace)
+
+        if cur_ns is None:
+            cur_ns = sym_table.createNameSpace(parent_namespace, part, SourceType.USER_DEFINED)
+        
+        parent_namespace = cur_ns
+    
+    return parent_namespace
+
 def main():
     try:
         # accessors
         mem         = currentProgram.getMemory()
         fm          = currentProgram.getFunctionManager()
-        sym_table   = currentProgram.getSymbolTable()
 
         # get info
         vtable_start    = askAddress("Virtual Table Start", "Enter the start address:")
@@ -18,7 +32,7 @@ def main():
         namespace_name  = askString("Target Namespace", "Enter the namespace you wish to use:")
         vtable_size     = vtable_end.subtract(vtable_start)
         method_count    = (vtable_size // 4) - 2    # exclude the pointer to rtti and the "this" delta
-        methods_start   = vtable_start.add(8)         # same as above ^
+        methods_start   = vtable_start.add(8)       # same as above ^
 
         # get functions
         funcs = []
@@ -39,17 +53,7 @@ def main():
             raise ValueError("No valid functions were found in the specified address range.")
 
         # create namespace
-        parent_namespace = None
-
-        for part in namespace_name.split("::"):
-            cur_ns = sym_table.getNamespace(part, parent_namespace)
-
-            if cur_ns is None:
-                cur_ns = sym_table.createNameSpace(parent_namespace, part, SourceType.USER_DEFINED)
-            
-            parent_namespace = cur_ns
-
-        namespace = parent_namespace
+        namespace = create_namespace(namespace_name)
 
         # rename functions
         for i, func in enumerate(funcs):
