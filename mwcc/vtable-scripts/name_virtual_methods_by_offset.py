@@ -13,12 +13,12 @@ def main():
         sym_table   = currentProgram.getSymbolTable()
 
         # get info
-        base_start      = askAddress("Base Virtual Table Start", "Enter the start address:")
-        base_end        = askAddress("Base Virtual Table End", "Enter the end address:")
+        vtable_start    = askAddress("Virtual Table Start", "Enter the start address:")
+        vtable_end      = askAddress("Virtual Table End", "Enter the end address:")
         namespace_name  = askString("Target Namespace", "Enter the namespace you wish to use:")
-        vtable_size     = base_end.subtract(base_start)
+        vtable_size     = vtable_end.subtract(vtable_start)
         method_count    = (vtable_size // 4) - 2    # exclude the pointer to rtti and the "this" delta
-        methods_start   = base_start.add(8)         # same as above ^
+        methods_start   = vtable_start.add(8)         # same as above ^
 
         # get functions
         funcs = []
