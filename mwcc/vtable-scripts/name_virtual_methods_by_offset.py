@@ -48,9 +48,8 @@ def main():
             if symbol is None:
                 # no label, create one
                 symbol = sym_table.createLabel(target_addr, "temp", namespace, SourceType.USER_DEFINED)
-
-            # must be unnamed
-            if symbol.getSource() != SourceType.DEFAULT:
+            elif symbol.getSource() != SourceType.DEFAULT:
+                # must be unnamed
                 continue
 
             vtable_offset = (i * 4) + 8
