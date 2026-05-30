@@ -1,4 +1,5 @@
-# Renames unnamed virtual methods by their offset from the start of the vtable.
+# [MWCC] Renames unnamed virtual methods by their offset from the start of the vtable.
+# @author Swiftshine
 # @category Symbol
 # @runtime PyGhidra
 

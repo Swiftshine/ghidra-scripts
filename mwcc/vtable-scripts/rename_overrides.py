@@ -1,4 +1,5 @@
-# Identify and rename vtable overrides.
+# [MWCC] Identify and rename vtable overrides.
+# @author Swiftshine
 # @category Analysis.C++
 # @runtime PyGhidra
 
